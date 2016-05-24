@@ -32,6 +32,25 @@ def get_haml_loader(loader):
                 return loader.load_template_source(*args, **kwargs)
 
     class Loader(baseclass):
+
+        def get_contents(self, origin):
+            _name, _extension = os.path.splitext(origin.name)
+
+            for extension in hamlpy.VALID_EXTENSIONS:
+                try:
+
+                    origin.name = self._generate_template_name(_name, extension)
+                    haml_source = super(Loader, self).get_contents(origin)
+                except TemplateDoesNotExist:
+                    pass
+                else:
+                    hamlParser = hamlpy.Compiler()
+                    html = hamlParser.process(haml_source)
+
+                    return html
+
+            raise TemplateDoesNotExist(origin.template_name)
+
         def load_template_source(self, template_name, *args, **kwargs):
             name, _extension = os.path.splitext(template_name)
             # os.path.splitext always returns a period at the start of extension
